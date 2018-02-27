@@ -10,7 +10,9 @@ const widgets = StyleSheet.create({
         justifyContent: 'space-between'
     },
     user_details_widget: {
-
+        ...layout.container,
+        ...layout.centered,
+        ...layout.padding_thick
     },
     logo_widget: {
         ...layout.centered,

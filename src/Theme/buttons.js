@@ -42,9 +42,16 @@ const google = {
     backgroundColor: colors.google_red,
 }
 
+const draggable_lock = {
+    ...social,
+    ...layout.centered,
+    height: buttons.wrapper.height
+}
+
 export default StyleSheet.create({
     ...buttons,
     facebook,
     google,
-    social
+    social,
+    draggable_lock
 })

@@ -1,26 +1,24 @@
 import React, { PureComponent } from 'react'
 import { View, Image } from 'react-native'
-import { colors, layout, text } from '../Theme'
+import { colors, layout, text, widgets } from '../Theme'
 import Icon from 'react-native-vector-icons/EvilIcons'
-import { Text } from '../components'
+import { Text, UserAvatar, UserAvatarLocked } from '../components'
 
 export default class UserDetails extends PureComponent {
     render(){
-        return <View style={{...layout.container, ...layout.centered, ...layout.padding_thick}}>
-            {this.props.loggedIn
-                ? <Image source={{uri: this.props.user.photo}} style={{height: 100, width: 100, borderRadius: 50}}/>
-                : <View style={{
-                    ...layout.centered,
-                    height: 100,
-                    width: 100,
-                    borderRadius: 50,
-                    marginBottom: layout.padding_thick.padding,
-                    backgroundColor: colors.grey}}><Icon name={'lock'} style={{
-                    fontSize: 100,
-                    color: colors.white}}/></View>}
-            <Text style={[text.centered, text.medium]}>{this.props.user.name || 'To sign in, drag the lock onto an authentication method of your choise'}</Text>
-            <Text style={[text.centered, text.small]}>{`Signed in with ${this.props.user.signInMethod}`}</Text>
-        </View>
+        if(this.props.loggedIn) return (
+            <View style={widgets.user_details_widget}>
+                <UserAvatar source={{uri: this.props.user.photo}}/>
+                <Text style={[text.centered, text.medium]}>{this.props.user.name}</Text>
+                <Text style={[text.centered, text.small]}>{`Signed in with ${this.props.user.signInMethod}`}</Text>
+            </View>
+        )
+        else return (
+            <View style={widgets.user_details_widget}>
+                 <UserAvatarLocked/>
+                <Text style={[text.centered, text.medium]}>{'To sign in, drag the lock onto an authentication method of your choise'}</Text>
+            </View>
+        )
     }
 }
 
