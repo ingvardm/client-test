@@ -4,11 +4,17 @@ import layout from './layout'
 const widgets = StyleSheet.create({
     login_widget: {
         ...layout.padding_thick,
-        ...layout.container,
         ...layout.centered,
         ...layout.row,
-        flex:1,
+        width: '100%',
         justifyContent: 'space-between'
+    },
+    user_details_widget: {
+
+    },
+    logo_widget: {
+        ...layout.centered,
+        ...layout.padding_thick
     }
 })
 

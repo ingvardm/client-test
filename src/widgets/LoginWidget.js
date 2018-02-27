@@ -8,11 +8,11 @@ import {
     StyleSheet,
     Vibration
 } from 'react-native'
-import FBSDK, { LoginManager } from 'react-native-fbsdk'
+import FBSDK, { LoginManager, AccessToken, setAvatar } from 'react-native-fbsdk'
 import { GoogleSignin } from 'react-native-google-signin'
-import Icon from 'react-native-vector-icons/Foundation'
 import { GoogleLoginButton, DraggableLock, FacebookLoginButton } from '../components'
 import { widgets, colors, buttons, layout } from '../Theme'
+import { FACEBOOK_API } from '../config'
 
 const screenWidth = Dimensions.get('window').width
 const handleWidth = StyleSheet.flatten(buttons.social).width
@@ -54,7 +54,7 @@ const handleColorInterpolation = {
 }
 
 export default class LoginWidget extends Component {
-    constructor(props){
+    constructor(props) {
         super(props)
         this.state = {
             offset: new Animated.ValueXY()
@@ -66,24 +66,24 @@ export default class LoginWidget extends Component {
                 let absoluteDelta = Math.abs(gesture.dx)
                 let dx = Math.min(Math.abs(gesture.dx), handleThresholdWithOffset) * Math.sign(gesture.dx)
 
-                if(absoluteDelta > handleThresholdWithOffset && this.canVibrate){
+                if (absoluteDelta > handleThresholdWithOffset && this.canVibrate) {
                     this.canVibrate = false
                     Vibration.vibrate(20)
-                } else if(absoluteDelta < handleThreshold){
+                } else if (absoluteDelta < handleThreshold) {
                     this.canVibrate = true
                 }
-                Animated.event([null,{dx: this.state.offset.x}])(e, {dx})
+                Animated.event([null, { dx: this.state.offset.x }])(e, { dx })
             },
             onPanResponderRelease: (e, gesture) => {
-                if(gesture.dx > triggerOffset){
+                if (gesture.dx > triggerOffset) {
                     this.googleAuth()
                 }
-                else if(gesture.dx < -triggerOffset){
+                else if (gesture.dx < -triggerOffset) {
                     this.facebookAuth()
                 }
                 Animated.spring(
                     this.state.offset,
-                    {toValue:{x:0,y:0}}
+                    { toValue: { x: 0, y: 0 } }
                 ).start()
             }
         })
@@ -93,20 +93,25 @@ export default class LoginWidget extends Component {
         this.setupGoogleSignin()
     }
 
-    facebookAuth = () => {
-        LoginManager.logInWithReadPermissions(['public_profile']).then(
-            function(result) {
-              if (result.isCancelled) {
-                alert('Login cancelled')
-              } else {
-                alert('Login success with permissions: '
-                  +result.grantedPermissions.toString())
-              }
-            },
-            function(error) {
-              alert('Login fail with error: ' + error)
-            }
-          )
+    facebookAuth = async () => {
+        let result = await LoginManager.logInWithReadPermissions(['public_profile'])
+        if (!result.isCancelled) {
+            let { accessToken } = await AccessToken.getCurrentAccessToken()
+            this.initUser(accessToken)
+        }
+    }
+
+    initUser = async token => {
+        let response = await fetch(FACEBOOK_API + token).catch(error => {
+            this.props.onError && this.props.onError(error)
+        })
+        let { error, name, id, picture } = await response.json()
+        if(error) his.props.onError && this.props.onError(error)
+        let user = {
+            name,
+            photo: picture.data.url
+        }
+        this.props.onSuccess(user)
     }
 
     googleAuth = () => {
@@ -114,8 +119,8 @@ export default class LoginWidget extends Component {
             .then((user) => {
                 this.props.onSuccess(user)
             })
-            .catch(e => {
-                this.props.onError && this.props.onError(e)
+            .catch(error => {
+                this.props.onError && this.props.onError(error)
             })
             .done()
     }
@@ -128,8 +133,8 @@ export default class LoginWidget extends Component {
                 offlineAccess: false
             })
         }
-        catch (err) {
-            console.log("Google signin error", err.code, err.message)
+        catch (error) {
+            console.log("Google signin error", error.code, error.message)
         }
     }
 
@@ -141,7 +146,7 @@ export default class LoginWidget extends Component {
                         backgroundColor: this.state.offset.x.interpolate(facebookButtonColorInterpolation),
                         borderTopRightRadius: this.state.offset.x.interpolate(negativeCornerRadiusInterpolation),
                         borderBottomRightRadius: this.state.offset.x.interpolate(negativeCornerRadiusInterpolation)
-                    }}/>
+                    }} />
 
                 <DraggableLock
                     {...this.panResponder.panHandlers}
@@ -160,13 +165,13 @@ export default class LoginWidget extends Component {
                         backgroundColor: this.state.offset.x.interpolate(googleButtonColorInterpolation),
                         borderTopLeftRadius: this.state.offset.x.interpolate(positiveCornerRadiusInterpolation),
                         borderBottomLeftRadius: this.state.offset.x.interpolate(positiveCornerRadiusInterpolation),
-                    }}/>
+                    }} />
             </View>
         )
     }
 }
 
 LoginWidget.defaultProps = {
-    onSuccess: function(){},
+    onSuccess: function () { },
     onError: null
 }

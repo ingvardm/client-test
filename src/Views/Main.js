@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { View } from 'react-native'
 import { layout } from '../Theme'
-import { LoginWidget } from '../widgets'
+import { LoginWidget, UserDetails, LogoWidget } from '../widgets'
 
 export default class Main extends Component {
     constructor(props){
@@ -13,6 +13,7 @@ export default class Main extends Component {
     }
 
     _onSuccess = user => {
+        console.log(user)
         this.setState({
             loggedIn: true,
             user
@@ -21,7 +22,9 @@ export default class Main extends Component {
 
     render() {
         return (
-            <View style={{...layout.container}}>
+            <View style={{...layout.container, justifyContent: 'flex-end'}}>
+                <LogoWidget/>
+                <UserDetails user={this.state.user} loggedIn={this.state.loggedIn}/>
                 <LoginWidget onSuccess={this._onSuccess}/>
             </View>
         )
