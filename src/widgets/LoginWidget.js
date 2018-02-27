@@ -2,16 +2,111 @@ import React, { Component } from 'react'
 import {
     Text,
     View,
+    PanResponder,
+    Animated,
+    Dimensions,
+    StyleSheet,
+    Vibration
 } from 'react-native'
-import FBSDK from 'react-native-fbsdk'
+import FBSDK, { LoginManager } from 'react-native-fbsdk'
 import { GoogleSignin } from 'react-native-google-signin'
 import Icon from 'react-native-vector-icons/Foundation'
-import { GoogleLoginButton } from '../components'
-import { widgets } from '../Theme';
+import { GoogleLoginButton, DraggableLock, FacebookLoginButton } from '../components'
+import { widgets, colors, buttons, layout } from '../Theme'
+
+const screenWidth = Dimensions.get('window').width
+const handleWidth = StyleSheet.flatten(buttons.social).width
+const containerPadding = StyleSheet.flatten(widgets.login_widget).padding
+const handleCenterToScreenEdgeLimit = containerPadding + handleWidth * 1.5
+const handleThreshold = screenWidth / 2 - handleCenterToScreenEdgeLimit
+const handleThresholdOffset = 10
+const handleThresholdWithOffset = handleThreshold + handleThresholdOffset
+const triggerOffset = handleThreshold + handleThresholdOffset / 2
+
+const positiveCornerRadiusInterpolation = {
+    inputRange: [handleThreshold, handleThresholdWithOffset],
+    outputRange: [handleWidth / 2, 0],
+    extrapolate: 'clamp'
+}
+
+const negativeCornerRadiusInterpolation = {
+    inputRange: [-handleThresholdWithOffset, -handleThreshold],
+    outputRange: [0, handleWidth / 2],
+    extrapolate: 'clamp'
+}
+
+const googleButtonColorInterpolation = {
+    inputRange: [handleThreshold, handleThresholdWithOffset],
+    outputRange: [colors.grey, colors.google_red],
+    extrapolate: 'clamp'
+}
+
+const facebookButtonColorInterpolation = {
+    inputRange: [-handleThresholdWithOffset, -handleThreshold],
+    outputRange: [colors.facebook_blue, colors.grey],
+    extrapolate: 'clamp'
+}
+
+const handleColorInterpolation = {
+    inputRange: [-handleThresholdWithOffset, handleThresholdWithOffset],
+    outputRange: [colors.facebook_blue, colors.google_red],
+    extrapolate: 'clamp'
+}
 
 export default class LoginWidget extends Component {
+    constructor(props){
+        super(props)
+        this.state = {
+            offset: new Animated.ValueXY()
+        }
+        this.canVibrate = true
+        this.panResponder = PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onPanResponderMove: (e, gesture) => {
+                let absoluteDelta = Math.abs(gesture.dx)
+                let dx = Math.min(Math.abs(gesture.dx), handleThresholdWithOffset) * Math.sign(gesture.dx)
+
+                if(absoluteDelta > handleThresholdWithOffset && this.canVibrate){
+                    this.canVibrate = false
+                    Vibration.vibrate(20)
+                } else if(absoluteDelta < handleThreshold){
+                    this.canVibrate = true
+                }
+                Animated.event([null,{dx: this.state.offset.x}])(e, {dx})
+            },
+            onPanResponderRelease: (e, gesture) => {
+                if(gesture.dx > triggerOffset){
+                    this.googleAuth()
+                }
+                else if(gesture.dx < -triggerOffset){
+                    this.facebookAuth()
+                }
+                Animated.spring(
+                    this.state.offset,
+                    {toValue:{x:0,y:0}}
+                ).start()
+            }
+        })
+    }
+
     componentDidMount() {
         this.setupGoogleSignin()
+    }
+
+    facebookAuth = () => {
+        LoginManager.logInWithReadPermissions(['public_profile']).then(
+            function(result) {
+              if (result.isCancelled) {
+                alert('Login cancelled')
+              } else {
+                alert('Login success with permissions: '
+                  +result.grantedPermissions.toString())
+              }
+            },
+            function(error) {
+              alert('Login fail with error: ' + error)
+            }
+          )
     }
 
     googleAuth = () => {
@@ -41,9 +136,31 @@ export default class LoginWidget extends Component {
     render() {
         return (
             <View style={widgets.login_widget}>
-                <Text>Please login using one of the following methods</Text>
-                <GoogleLoginButton onPress={this.googleAuth}/>
-                <GoogleLoginButton onPress={this.googleAuth}/>
+                <FacebookLoginButton animated onPress={this.facebookAuth}
+                    style={{
+                        backgroundColor: this.state.offset.x.interpolate(facebookButtonColorInterpolation),
+                        borderTopRightRadius: this.state.offset.x.interpolate(negativeCornerRadiusInterpolation),
+                        borderBottomRightRadius: this.state.offset.x.interpolate(negativeCornerRadiusInterpolation)
+                    }}/>
+
+                <DraggableLock
+                    {...this.panResponder.panHandlers}
+                    style={{
+                        transform: this.state.offset.getTranslateTransform(),
+                        backgroundColor: this.state.offset.x.interpolate(handleColorInterpolation),
+                        borderTopLeftRadius: this.state.offset.x.interpolate(negativeCornerRadiusInterpolation),
+                        borderBottomLeftRadius: this.state.offset.x.interpolate(negativeCornerRadiusInterpolation),
+                        borderTopRightRadius: this.state.offset.x.interpolate(positiveCornerRadiusInterpolation),
+                        borderBottomRightRadius: this.state.offset.x.interpolate(positiveCornerRadiusInterpolation)
+                    }}
+                    horizontal />
+
+                <GoogleLoginButton animated onPress={this.googleAuth}
+                    style={{
+                        backgroundColor: this.state.offset.x.interpolate(googleButtonColorInterpolation),
+                        borderTopLeftRadius: this.state.offset.x.interpolate(positiveCornerRadiusInterpolation),
+                        borderBottomLeftRadius: this.state.offset.x.interpolate(positiveCornerRadiusInterpolation),
+                    }}/>
             </View>
         )
     }

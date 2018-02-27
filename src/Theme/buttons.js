@@ -5,7 +5,7 @@ import layout from './layout'
 const buttons = {
     wrapper:{
         ...layout.row,
-        height: 45,
+        height: 60,
     },
     content: {
         ...layout.row,
@@ -13,10 +13,8 @@ const buttons = {
         flex:1
     },
     icon: {
-        height: 35,
-        width: 35,
-        fontSize:32,
-        color: colors.white
+        fontSize: 40,
+        color: colors.white,
     },
     title: {
         color: colors.white,
@@ -26,27 +24,27 @@ const buttons = {
 }
 
 const round = {
-    borderRadius: 22.5,
+    borderRadius: 30,
 }
 
 const social = {
     ...round,
-    borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: 'transparent'
+    width: 60,
 }
 
 const facebook = {
     ...social,
-    borderColor: colors.facebook_blue,
+    backgroundColor: colors.facebook_blue,
 }
 
 const google = {
     ...social,
-    borderColor: colors.google_red,
+    backgroundColor: colors.google_red,
 }
 
 export default StyleSheet.create({
     ...buttons,
     facebook,
-    google
+    google,
+    social
 })

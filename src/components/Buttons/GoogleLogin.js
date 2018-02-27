@@ -4,9 +4,7 @@ import { buttons, colors } from '../../Theme'
 
 export default function(props){
     return <Button
-        title='Google'
-        icon='social-google-plus'
-        style={buttons.google}
-        color={colors.google_red}
-        {...props}/>
+        icon='sc-google-plus'
+        {...props}
+        style={[buttons.google, props.style]}/>
 }

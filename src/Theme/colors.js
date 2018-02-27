@@ -1,8 +1,9 @@
 const colors = {
     white: 'white',
+    grey: 'rgba(170,170,170,1)',
     black: 'black',
-    facebook_blue: '#3b5998',
-    google_red: '#db3236'
+    facebook_blue: 'rgba(59,89,152,1)',
+    google_red: 'rgba(219,50,54,1)'
 }
 
 const opacities = {
