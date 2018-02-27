@@ -48,8 +48,8 @@ const facebookButtonColorInterpolation = {
 }
 
 const handleColorInterpolation = {
-    inputRange: [-handleThresholdWithOffset, handleThresholdWithOffset],
-    outputRange: [colors.facebook_blue, colors.google_red],
+    inputRange: [-handleThresholdWithOffset, 0, handleThresholdWithOffset],
+    outputRange: [colors.facebook_blue, colors.google_green, colors.google_red],
     extrapolate: 'clamp'
 }
 
