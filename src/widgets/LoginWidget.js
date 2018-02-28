@@ -61,7 +61,6 @@ export default class LoginWidget extends Component {
             offset: new Animated.ValueXY(),
         }
         this.canVibrate = true
-        this.handleSticky = false
         this.handleLocked = false
         this.panResponder = PanResponder.create({
             onStartShouldSetPanResponder: () => true,
@@ -76,7 +75,7 @@ export default class LoginWidget extends Component {
     }
 
     onHandleMove = (e, gesture) => {
-        if(this.handleSticky || this.handleLocked) return
+        if(this.handleLocked) return
         let absoluteDelta = Math.abs(gesture.dx)
         let dxSign = Math.sign(gesture.dx)
         let dx = Math.min(absoluteDelta, handleThresholdWithOffset) * dxSign
@@ -86,17 +85,14 @@ export default class LoginWidget extends Component {
                 this.canVibrate = false
                 Vibration.vibrate(25)
             }
-            if(!this.handleSticky){
-                this.handleSticky = true
-                Animated.timing(
-                    this.state.offset,
-                    {
-                        toValue: {x: handleThresholdWithOffset * dxSign, y: 0},
-                        duration: 100,
-                        easing: Easing.linear
-                    }
-                ).start()
-            }
+            Animated.timing(
+                this.state.offset,
+                {
+                    toValue: {x: handleThresholdWithOffset * dxSign, y: 0},
+                    duration: 50,
+                    easing: Easing.linear
+                }
+            ).start()
         } else if (absoluteDelta < handleThreshold) {
             this.canVibrate = true
             Animated.event([null, {dx: this.state.offset.x}])(e, {dx})
@@ -122,7 +118,6 @@ export default class LoginWidget extends Component {
 
     reset = () => {
         this.handleLocked = false,
-        this.handleSticky = false,
         this.canVibrate = true
         this.resetHandle()
     }
