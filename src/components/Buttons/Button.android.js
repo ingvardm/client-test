@@ -7,7 +7,10 @@ export default class Button extends PureComponent {
     render(){
         return (
             <Animated.View style={[buttons.wrapper, this.props.style]}>
-                <TouchableNativeFeedback background={TouchableNativeFeedback.Ripple(this.props.color, true)} onPress={this.props.onPress}>
+                <TouchableNativeFeedback
+                    background={TouchableNativeFeedback.Ripple(this.props.color, true)}
+                    disabled={this.props.disabled}
+                    onPress={this.props.onPress}>
                     <View style={buttons.content}>
                         {this.props.icon && <Icon style={[buttons.icon, {color: this.props.color}]} name={this.props.icon} />}
                         {this.props.title && <Text style={[buttons.title, {color: this.props.color}]}>{this.props.title}</Text>}

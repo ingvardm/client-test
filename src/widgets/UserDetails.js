@@ -1,10 +1,10 @@
-import React, { PureComponent } from 'react'
+import React, { Component } from 'react'
 import { View, Image } from 'react-native'
 import { colors, layout, text, widgets } from '../Theme'
 import Icon from 'react-native-vector-icons/EvilIcons'
 import { Text, UserAvatar, UserAvatarLocked } from '../components'
 
-export default class UserDetails extends PureComponent {
+export default class UserDetails extends Component {
     render(){
         if(this.props.loggedIn) return (
             <View style={widgets.user_details_widget}>

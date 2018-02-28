@@ -9,7 +9,7 @@ import {
     StyleSheet,
     Vibration
 } from 'react-native'
-import FBSDK, { LoginManager, AccessToken, setAvatar } from 'react-native-fbsdk'
+import FBSDK, { LoginManager, AccessToken } from 'react-native-fbsdk'
 import { GoogleSignin } from 'react-native-google-signin'
 import { GoogleLoginButton, DraggableLock, FacebookLoginButton } from '../components'
 import { widgets, colors, buttons, layout } from '../Theme'
@@ -62,6 +62,7 @@ export default class LoginWidget extends Component {
         }
         this.canVibrate = true
         this.handleSticky = false
+        this.handleLocked = false
         this.panResponder = PanResponder.create({
             onStartShouldSetPanResponder: () => true,
             onPanResponderMove: this.onHandleMove,
@@ -69,7 +70,13 @@ export default class LoginWidget extends Component {
         })
     }
 
+    componentDidMount() {
+        this.setupGoogleSignin()
+        this.props.onCreated(this)
+    }
+
     onHandleMove = (e, gesture) => {
+        if(this.handleSticky || this.handleLocked) return
         let absoluteDelta = Math.abs(gesture.dx)
         let dxSign = Math.sign(gesture.dx)
         let dx = Math.min(absoluteDelta, handleThresholdWithOffset) * dxSign
@@ -89,60 +96,92 @@ export default class LoginWidget extends Component {
                         easing: Easing.linear
                     }
                 ).start()
-            } else {
-                dx = handleThresholdWithOffset * dxSign
             }
         } else if (absoluteDelta < handleThreshold) {
             this.canVibrate = true
-            this.handleSticky = false
+            Animated.event([null, {dx: this.state.offset.x}])(e, {dx})
         }
 
-        Animated.event([null, {dx: this.state.offset.x}])(e, {dx})
     }
 
-    onHandleRelease = (e, gesture) => {
-        if (gesture.dx > triggerOffset) {
-            this.googleAuth()
-        }
-        else if (gesture.dx < -triggerOffset) {
-            this.facebookAuth()
-        }
+    onHandleRelease = async (e, gesture) => {
+        if(this.handleLocked) return
+        let signedIn = false
+        if(gesture.dx > triggerOffset) signedIn = await this.googleAuth().catch(e => console.log(e))
+        if(gesture.dx < -triggerOffset) signedIn = await this.facebookAuth()
+        if(signedIn) return 
+        this.reset()
+    }
+
+    resetHandle(){
         Animated.spring(
             this.state.offset,
             { toValue: { x: 0, y: 0 } }
         ).start()
     }
 
-    componentDidMount() {
-        this.setupGoogleSignin()
+    reset = () => {
+        this.handleLocked = false,
+        this.handleSticky = false,
+        this.canVibrate = true
+        this.resetHandle()
+    }
+
+    logOut = signInMethod => {
+        if(signInMethod === 'Google'){
+            return new Promise((res, rej) => {
+                GoogleSignin.signOut()
+                .then(() => {
+                    this.reset()
+                    res(true)
+                })
+                .catch(e => rej(e))
+            })
+        }
+        else LoginManager.logOut()
+        this.reset()
+        return true
     }
 
     facebookAuth = async () => {
         let result = await LoginManager.logInWithReadPermissions(['public_profile'])
         if (!result.isCancelled) {
             let { accessToken } = await AccessToken.getCurrentAccessToken()
-            this.initUser(accessToken)
+            return this.initUser(accessToken)
         }
     }
 
     initUser = async token => {
         let response = await fetch(FACEBOOK_API + token).catch(error => {
-            this.props.onError && this.props.onError(error)
+            this.props.onError(error)
+            return false
         })
         let { error, name, id, picture } = await response.json()
-        if(error) his.props.onError && this.props.onError(error)
+        if(error){
+            this.props.onError(error)
+            return false
+        }
         let user = {
             name,
             photo: picture.data.url,
             signInMethod: 'Facebook'
         }
         this.props.onSuccess(user)
+        this.handleLocked = true
+        return true
     }
 
-    googleAuth = async () => {
-        let {name, photo, error} = await GoogleSignin.signIn()
-        if(error && this.props.onError) return this.props.onError(error)
-        this.props.onSuccess({name, photo, signInMethod: 'Google'})
+    googleAuth = () => {
+        return new Promise((res, rej) => {
+            GoogleSignin.signIn()
+                .then(({name, photo}) => {
+                    res(true)
+                    this.props.onSuccess({name, photo, signInMethod: 'Google'})
+                    this.handleLocked = true
+                })
+                .catch(e => rej(e))
+            }
+        )
     }
 
     async setupGoogleSignin() {
@@ -161,7 +200,7 @@ export default class LoginWidget extends Component {
     render() {
         return (
             <View style={widgets.login_widget}>
-                <FacebookLoginButton animated onPress={this.facebookAuth}
+                <FacebookLoginButton animated onPress={this.facebookAuth} disabled={this.props.stickTo !== 'Facebook'}
                     style={{
                         backgroundColor: this.state.offset.x.interpolate(facebookButtonColorInterpolation),
                         borderTopRightRadius: this.state.offset.x.interpolate(negativeCornerRadiusInterpolation),
@@ -180,7 +219,7 @@ export default class LoginWidget extends Component {
                     }}
                     horizontal />
 
-                <GoogleLoginButton animated onPress={this.googleAuth}
+                <GoogleLoginButton animated onPress={this.googleAuth} disabled={this.props.stickTo !== 'Google'}
                     style={{
                         backgroundColor: this.state.offset.x.interpolate(googleButtonColorInterpolation),
                         borderTopLeftRadius: this.state.offset.x.interpolate(positiveCornerRadiusInterpolation),
@@ -191,7 +230,10 @@ export default class LoginWidget extends Component {
     }
 }
 
+const noop = function(){}
+
 LoginWidget.defaultProps = {
-    onSuccess: function () { },
-    onError: null
+    onSuccess: noop,
+    onError: noop,
+    onCreated: noop
 }
