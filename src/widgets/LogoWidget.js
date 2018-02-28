@@ -8,7 +8,7 @@ export default class LogoWidget extends PureComponent {
         return <View style={widgets.logo_widget}>
             <Text style={text.title}>Jusmin</Text>
             <Text style={text.small}>JUst Sign Me IN!</Text>
-            <Text style={text.small}>Made with &hearts; by Igor.</Text>
+            <Text style={text.small}>Made with ❤ by Igor.</Text>
         </View>
     }
 }
