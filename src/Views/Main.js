@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
-import { View, BackHandler } from 'react-native'
+import { View, BackHandler, I18nManager } from 'react-native'
 import { layout } from '../Theme'
 import { LoginWidget, UserDetails, LogoWidget } from '../widgets'
+
+I18nManager.allowRTL(false)
 
 const initialState = {
     loggedIn: false,
