@@ -103,10 +103,11 @@ export default class LoginWidget extends Component {
     onHandleRelease = async (e, gesture) => {
         if(this.handleLocked) return
         let signedIn = false
+        
         if(gesture.dx > triggerOffset) signedIn = await this.googleAuth().catch(e => console.log(e))
-        if(gesture.dx < -triggerOffset) signedIn = await this.facebookAuth()
-        if(signedIn) return 
-        this.reset()
+        else if(gesture.dx < -triggerOffset) signedIn = await this.facebookAuth()
+        
+        if(!signedIn) this.reset()
     }
 
     resetHandle(){
