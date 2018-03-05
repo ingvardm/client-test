@@ -144,18 +144,16 @@ export default class LoginWidget extends Component {
         let result = await LoginManager.logInWithReadPermissions(['public_profile']).catch(e => {
             alert(e.code)
         })
-        if(!result) return false
-        if (!result.isCancelled) {
-            let { accessToken } = await AccessToken.getCurrentAccessToken()
-            return this.initUser(accessToken)
-        }
+        if(!result || result.isCancelled) return false
+        let { accessToken } = await AccessToken.getCurrentAccessToken()
+        return await this.initUser(accessToken)
     }
 
     initUser = async token => {
         let response = await fetch(FACEBOOK_API + token).catch(error => {
-            this.props.onError(error)
-            return false
-        })
+                this.props.onError(error)
+                return false
+            })
         let { error, name, id, picture } = await response.json()
         if(error){
             this.props.onError(error)
