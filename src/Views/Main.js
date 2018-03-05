@@ -33,7 +33,7 @@ export default class Main extends Component {
             if(loggedOut) this.reset()
             return true;
         }
-        return false
+        BackHandler.exitApp()
     }
     
     reset = () => {
