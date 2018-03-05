@@ -139,7 +139,13 @@ export default class LoginWidget extends Component {
     }
 
     facebookAuth = async () => {
-        let result = await LoginManager.logInWithReadPermissions(['public_profile'])
+        if (await AccessToken.getCurrentAccessToken() != null) {
+            LoginManager.logOut()
+        }
+        let result = await LoginManager.logInWithReadPermissions(['public_profile']).catch(e => {
+            alert(e.code)
+        })
+        if(!result) return false
         if (!result.isCancelled) {
             let { accessToken } = await AccessToken.getCurrentAccessToken()
             return this.initUser(accessToken)
