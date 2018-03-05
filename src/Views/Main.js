@@ -41,7 +41,6 @@ export default class Main extends Component {
     }
 
     onSuccess = user => {
-        console.log(user)
         this.setState({
             loggedIn: true,
             user
